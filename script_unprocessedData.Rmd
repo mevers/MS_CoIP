@@ -73,7 +73,7 @@ data.merged[data.merged == 0] <- NA;
 
 # Replicate library consistency
 
-We plot pairwise sample log2-transformed LFQ values, and show corresponding Pearson's product-moment correlation coefficients. Congruence between replicate libraries is reflected by large positive correlation coefficients.
+We plot pairwise sample log2-transformed LFQ values, and show corresponding Pearson's product-moment correlation coefficients. Congruence between replicate libraries is reflected by large positive correlation coefficients. Dashed red lines indicate the identity map, and blue lines with blue shaded areas give the linear model fit including 95% confidence intervals. 
 
 ### GFP libraries
 ```{r echo=FALSE, fig.width = 8, fig.height = 6}
@@ -83,7 +83,14 @@ df <- df[!apply(df, 1, function(x) all(is.na(x))), ];
 # Switch off warnings to get rid of annoying warning messages due to NA's
 options(warn = -1);
 # Pairwise plots
-gg <- ggpairs(df);
+my_fn <- function(data, mapping, method = "lm", ...) {
+  p <- ggplot(data = data, mapping = mapping);
+  p <- p + geom_point();
+  p <- p + geom_abline(slope = 1, intercept = 0, colour = "red", linetype = 3);
+  p <- p + geom_smooth(method = method, fullrange = TRUE, ...);
+  return(p);
+}
+gg <- ggpairs(df, lower = list(continuous = my_fn));
 gg <- gg + theme_bw();
 gg <- gg + theme(
   strip.background = element_blank(),
@@ -110,7 +117,14 @@ df <- df[!apply(df, 1, function(x) all(is.na(x))), ];
 # Switch off warnings to get rid of annoying warning messages due to NA's
 options(warn = -1);
 # Pairwise plots
-gg <- ggpairs(df);
+my_fn <- function(data, mapping, method = "lm", ...) {
+  p <- ggplot(data = data, mapping = mapping);
+  p <- p + geom_point();
+  p <- p + geom_abline(slope = 1, intercept = 0, colour = "red", linetype = 3);
+  p <- p + geom_smooth(method = method, fullrange = TRUE, ...);
+  return(p);
+}
+gg <- ggpairs(df, lower = list(continuous = my_fn));
 gg <- gg + theme_bw();
 gg <- gg + theme(
   strip.background = element_blank(),
@@ -176,7 +190,14 @@ df <- df[!apply(df, 1, function(x) all(is.na(x))), ];
 # Switch off warnings to get rid of annoying warning messages due to NA's
 options(warn = -1);
 # Pairwise plots
-gg <- ggpairs(df);
+my_fn <- function(data, mapping, method = "lm", ...) {
+  p <- ggplot(data = data, mapping = mapping);
+  p <- p + geom_point();
+  p <- p + geom_abline(slope = 1, intercept = 0, colour = "red", linetype = 3);
+  p <- p + geom_smooth(method = method, fullrange = TRUE, ...);
+  return(p);
+}
+gg <- ggpairs(df, lower = list(continuous = my_fn));
 gg <- gg + theme_bw();
 gg <- gg + theme(
   strip.background = element_blank(),

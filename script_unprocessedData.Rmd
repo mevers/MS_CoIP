@@ -29,6 +29,15 @@ suppressMessages(library("ggrepel"));
 suppressMessages(library("GGally"));
 ```
 
+# Background
+
+**Key question: Does HEATR3 bind to RPL11 in A549 cells?**
+
+**Experiment design**
+
+**Condition 1**: myc-tagged HEATR3-transduced A549 cell line, followed by IP using myc antibody  
+**Condition 2**: empty GFP vector-transduced A549 cell line, followed by IP using myc antibody
+
 
 # The MS data
 
@@ -46,7 +55,7 @@ names(data.list) <- gsub(" ", "_", names(data.list));
 
 As an example, we show data from `r fn[3]` in the following table:
 ```{r echo=FALSE}
-head(data.list[[3]]);
+data.list[[3]];
 ```
 
 
@@ -75,7 +84,7 @@ data.merged[data.merged == 0] <- NA;
 
 We plot pairwise sample log2-transformed LFQ values, and show corresponding Pearson's product-moment correlation coefficients. Congruence between replicate libraries is reflected by large positive correlation coefficients. Dashed red lines indicate the identity map, and blue lines with blue shaded areas give the linear model fit including 95% confidence intervals. 
 
-### GFP libraries
+## GFP libraries
 ```{r echo=FALSE, fig.width = 8, fig.height = 6}
 df <- log2(data.merged[, grep("GFP", colnames(data.merged))]);
 # Remove entries that have only NA's
@@ -84,10 +93,16 @@ df <- df[!apply(df, 1, function(x) all(is.na(x))), ];
 options(warn = -1);
 # Pairwise plots
 my_fn <- function(data, mapping, method = "lm", ...) {
+  xVal <- data[, as.character(mapping$x)];
+  yVal <- data[, as.character(mapping$y)];
+  label.text <- sprintf("N=%i", nrow(data[complete.cases(xVal, yVal), ]));
+  label.x <- -Inf;
+  label.y <- Inf;
   p <- ggplot(data = data, mapping = mapping);
   p <- p + geom_point();
   p <- p + geom_abline(slope = 1, intercept = 0, colour = "red", linetype = 3);
   p <- p + geom_smooth(method = method, fullrange = TRUE, ...);
+  p <- p + geom_text(aes(x = label.x, y = label.y, hjust = 0, vjust = 1, label = label.text));
   return(p);
 }
 gg <- ggpairs(df, lower = list(continuous = my_fn));
@@ -109,7 +124,7 @@ gg;
 options(warn = 0);
 ```
 
-### MT libraries
+## MT libraries
 ```{r echo=FALSE, fig.width = 8, fig.height = 6}
 df <- log2(data.merged[, grep("MT", colnames(data.merged))]);
 # Remove entries that have only NA's
@@ -118,10 +133,56 @@ df <- df[!apply(df, 1, function(x) all(is.na(x))), ];
 options(warn = -1);
 # Pairwise plots
 my_fn <- function(data, mapping, method = "lm", ...) {
+  xVal <- data[, as.character(mapping$x)];
+  yVal <- data[, as.character(mapping$y)];
+  label.text <- sprintf("N=%i", nrow(data[complete.cases(xVal, yVal), ]));
+  label.x <- -Inf;
+  label.y <- Inf;
   p <- ggplot(data = data, mapping = mapping);
   p <- p + geom_point();
   p <- p + geom_abline(slope = 1, intercept = 0, colour = "red", linetype = 3);
   p <- p + geom_smooth(method = method, fullrange = TRUE, ...);
+  p <- p + geom_text(aes(x = label.x, y = label.y, hjust = 0, vjust = 1, label = label.text));
+  return(p);
+}
+gg <- ggpairs(df, lower = list(continuous = my_fn));
+gg <- gg + theme_bw();
+gg <- gg + theme(
+  strip.background = element_blank(),
+  panel.border = element_rect(colour = "black"),
+  legend.position = "bottom",
+  legend.key = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank()
+);
+gg <- gg + labs(
+  x = "log2(LFQ, Sample 1)",
+  y = "log2(LFQ, Sample 2)",
+  title = "Correlation of pairwise sample LFQ values"
+);
+gg;
+options(warn = 0);
+```
+
+## All libraries
+```{r echo=FALSE, fig.width = 12, fig.height = 12}
+df <- log2(data.merged[, -1]);
+# Remove entries that have only NA's
+df <- df[!apply(df, 1, function(x) all(is.na(x))), ];
+# Switch off warnings to get rid of annoying warning messages due to NA's
+options(warn = -1);
+# Pairwise plots
+my_fn <- function(data, mapping, method = "lm", ...) {
+  xVal <- data[, as.character(mapping$x)];
+  yVal <- data[, as.character(mapping$y)];
+  label.text <- sprintf("N=%i", nrow(data[complete.cases(xVal, yVal), ]));
+  label.x <- -Inf;
+  label.y <- Inf;
+  p <- ggplot(data = data, mapping = mapping);
+  p <- p + geom_point();
+  p <- p + geom_abline(slope = 1, intercept = 0, colour = "red", linetype = 3);
+  p <- p + geom_smooth(method = method, fullrange = TRUE, ...);
+  p <- p + geom_text(aes(x = label.x, y = label.y, hjust = 0, vjust = 1, label = label.text));
   return(p);
 }
 gg <- ggpairs(df, lower = list(continuous = my_fn));
@@ -145,7 +206,6 @@ options(warn = 0);
 
 
 # GFP-corrected replicate library consistency
-
 We calculate relative protein abundances as
 $$
 \text{relLog2LFQ} = \log_2(\text{LFQ, MT}) - \log_2(\text{LFQ, GFP})\,,
@@ -181,37 +241,5 @@ gg;
 options(warn = 0);
 ```
 
-# Analysis of all pairwise library comparisons
-
-```{r echo=FALSE, fig.width = 12, fig.height = 12}
-df <- log2(data.merged[, -1]);
-# Remove entries that have only NA's
-df <- df[!apply(df, 1, function(x) all(is.na(x))), ];
-# Switch off warnings to get rid of annoying warning messages due to NA's
-options(warn = -1);
-# Pairwise plots
-my_fn <- function(data, mapping, method = "lm", ...) {
-  p <- ggplot(data = data, mapping = mapping);
-  p <- p + geom_point();
-  p <- p + geom_abline(slope = 1, intercept = 0, colour = "red", linetype = 3);
-  p <- p + geom_smooth(method = method, fullrange = TRUE, ...);
-  return(p);
-}
-gg <- ggpairs(df, lower = list(continuous = my_fn));
-gg <- gg + theme_bw();
-gg <- gg + theme(
-  strip.background = element_blank(),
-  panel.border = element_rect(colour = "black"),
-  legend.position = "bottom",
-  legend.key = element_blank(),
-  panel.grid.major = element_blank(),
-  panel.grid.minor = element_blank()
-);
-gg <- gg + labs(
-  x = "log2(LFQ, Sample 1)",
-  y = "log2(LFQ, Sample 2)",
-  title = "Correlation of pairwise sample LFQ values"
-);
-gg;
-options(warn = 0);
-```
+# Discussion
+Pairwise comparisons of protein abundances in the myc-tagged and GFP libraries show large congruence within myc-tagged replicates and within GFP libraries. However, the large correlation coefficients when comparing protein abundances from myc-tagged with GFP libraries suggest that specific binding using the myc antibodies is low. 

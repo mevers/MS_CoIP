@@ -38,8 +38,8 @@ source("myfunctions.R");
 
 **Experiment design**
 
-**Condition 1**: myc-tagged HEATR3-transduced A549 cell line, followed by IP using myc antibody  
-**Condition 2**: empty GFP vector-transduced A549 cell line, followed by IP using myc antibody
+**Condition 1 (HEATR3 overexpression)**: myc-tagged HEATR3-transduced A549 cell line, followed by IP using myc antibody  
+**Condition 2 (Control)**: empty GFP vector-transduced A549 cell line, followed by IP using myc antibody
 
 
 # The MS data
@@ -64,7 +64,7 @@ data.list[[3]];
 
 # Data cleaning
 
-From every dataframe in the list, we extract LFQ intensities for the GFP and Myc-tagged (MT) libraries
+From every dataframe in the list, we extract LFQ intensities for the myc-tagged (MT) libraries
 ```{r}
 data <- lapply(data.list, function(x) {
   df <- x[, c(1, 2, 17)];
@@ -193,10 +193,9 @@ options(warn = 0);
 ```
 
 
-
 # Discussion
 Pairwise comparisons of protein abundances in the myc-tagged and GFP libraries show large congruence within myc-tagged replicates and within GFP libraries. However, the large correlation coefficients between protein abundances from myc-tagged with GFP control libraries suggest that specific binding using the myc antibodies is low.
 
 The principle component analysis supports this conclusion, where the separation in PC1 is driven by the different replicate experiments rather than the condition.
 
-Surprisingly, myc-tagged and GFP control libraries could be considered replicate libraries, as much as the proper by-design replicates are considered replicate libraries.
+Surprisingly, myc-tagged and GFP control libraries resemble replicate libraries, in as much as the by-design replicates behave as replicate libraries.

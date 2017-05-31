@@ -1,0 +1,195 @@
+---
+title: "myc-tagged HEATR3 CoIP"
+subtitle: "Preliminary MS analysis"
+author: "[Maurits Evers](mailto:maurits.evers@anu.edu.au?subject=MS_CoIP [version 1.0 (`r format(Sys.time(), '%d %B %Y')`)])"
+date: "Version 1.0 (`r format(Sys.time(), '%d %B %Y')`)"
+output:
+  ioslides_presentation:
+    widescreen: true
+    fig_width: 10.5
+    fig_height: 5.5
+    fig_caption: false
+    df_print: paged
+---
+
+
+```{r setup, include=FALSE}
+# knitr options
+knitr::opts_chunk$set(echo = FALSE)
+
+# Libraries
+suppressMessages(library("readxl"));
+suppressMessages(library("reshape2"));
+suppressMessages(library("ggplot2"));
+suppressMessages(library("ggrepel"));
+suppressMessages(library("GGally"));
+suppressMessages(library("DT"));
+
+# Custom functions
+source("myfunctions.R");
+
+# Load data
+fn <- c("Exp2 sample 1.xlsx", "Exp2 sample 2.xlsx", "Exp3.xlsx", "Exp4.xlsx");
+data.list <- lapply(fn, function(x) as.data.frame(read_excel(x, sheet = 2)));
+names(data.list) <- gsub(".xlsx", "", fn);
+names(data.list) <- gsub(" ", "_", names(data.list));
+data <- lapply(data.list, function(x) {
+  df <- x[, c(1, 2, 17)];
+  colnames(df) <- c("GFP", "MT", "proteinID");
+  return(df);
+})
+data.merged <- Reduce(function(x,y) merge(x, y, by = "proteinID", all = TRUE), data);
+# Give unique colnames
+colnames(data.merged) <- c("proteinID", paste(rep(c("GFP", "MT"), 4), rep(names(data), each = 2), sep = "_"));
+# Replace zeros with NA's
+data.merged[data.merged == 0] <- NA;
+```
+
+## Where to find the slides
+
+1. Clone project from [GitHub link](https://github.com/mevers/MS_CoIP)
+2. Install necessary R library dependencies  
+    ```
+    source("http://www.bioconductor.org/biocLite.R");
+    biocLite(c("readxl", "ggplot2", "ggrepel", "reshape2", "GGally", "DT"));
+    ```
+2. Download and install [RStudio](https://www.rstudio.com/)
+3. Open `slides.Rmd` in RStudio and execute `Run Presentation`
+
+
+## MS data
+
+We load unprocessed data from the original Excel sheets and merge all data sets into one dataframe. 
+<div style="font-size:45%">
+```{r echo=FALSE}
+DT::datatable(
+  data.merged, 
+  rownames = FALSE,
+  options = list(
+    autoWidth = TRUE,
+    columnDefs = list(list(width = '20%', targets = list(1)))
+  ));
+```
+</div>
+
+
+## Replicate library consistency
+
+We plot pairwise sample log2-transformed LFQ values, and show corresponding Pearson's product-moment correlation coefficients. Congruence between replicate libraries is reflected by large positive correlation coefficients. Dashed red lines indicate the identity map, and blue lines with blue shaded areas give the linear model fit including 95% confidence intervals. We highlight HEATR3 abundances in red.
+
+## GFP libraries
+```{r echo=FALSE, fig.width = 9, fig.height = 5}
+df <- log2(data.merged[, grep("GFP", colnames(data.merged))]);
+df$id <- data.merged[, 1];
+# Switch off warnings to get rid of annoying warning messages due to NA's
+options(warn = -1);
+ggpairwise(
+  df,
+  xlab = "log2(LFQ, Sample 1)",
+  ylab = "log2(LFQ, Sample 2)",
+  title = "Correlation of pairwise sample LFQ values");
+options(warn = 0);
+```
+
+## MT libraries
+```{r echo=FALSE, fig.width = 9, fig.height = 5}
+df <- log2(data.merged[, grep("MT", colnames(data.merged))]);
+df$id <- data.merged[, 1];
+# Switch off warnings to get rid of annoying warning messages due to NA's
+options(warn = -1);
+ggpairwise(
+  df,
+  xlab = "log2(LFQ, Sample 1)",
+  ylab = "log2(LFQ, Sample 2)",
+  title = "Correlation of pairwise sample LFQ values");
+options(warn = 0);
+```
+
+## All libraries
+```{r echo=FALSE, fig.width = 9, fig.height = 5}
+df <- log2(data.merged[, -1]);
+df$id <- data.merged[, 1];
+# Switch off warnings to get rid of annoying warning messages due to NA's
+options(warn = -1);
+ggpairwise(
+  df,
+  xlab = "log2(LFQ, Sample 1)",
+  ylab = "log2(LFQ, Sample 2)",
+  title = "Correlation of pairwise sample LFQ values");
+options(warn = 0);
+```
+
+## Principle component analysis I
+
+```{r echo=FALSE, fig.width = 9, fig.height = 5}
+pca <- prcomp(t(log2(data.merged[complete.cases(data.merged), -1])), scale = TRUE);
+df <- cbind.data.frame(
+  x = pca$x[, 1],
+  y = pca$x[, 2],
+  cond = gsub("_Exp.*", "", rownames(pca$x)),
+  id = rownames(pca$x));
+gg <- ggplot(df, aes(x = x, y = y, colour = cond));
+gg <- gg + geom_point(size = 2);
+gg <- gg + geom_text_repel(
+  aes(x = x, y = y, label = id),
+  box.padding = unit(1, 'lines'),
+  point.padding = unit(1, 'lines'),
+  min.segment.length = unit(0, "lines"));
+gg <- gg + theme_bw();
+gg <- gg + scale_colour_brewer(palette = "Set1", guide = FALSE);
+gg <- gg + theme(
+  strip.background = element_blank(),
+  panel.border = element_rect(colour = "black"),
+  legend.position = "bottom",
+  legend.key = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank()
+);
+gg <- gg + labs(
+  x = "PC 1",
+  y = "PC 2"
+);
+gg;
+```
+
+## Principle component analysis II
+
+It is clear from the figure that the main separation in principle components of the libraries is driven by the different replicate experiments **irrespective** of the condition (overexpressed myc-tagged HEATR3 vs. GFP control). In other words, **the differences between e.g. the myc-tagged Exp3 and myc-tagged Exp4 libraries are larger than the differences between the myc-tagged Exp3 and GFP control Exp3 libraries**. 
+
+## GFP-corrected replicate library consistency I
+
+We calculate relative protein abundances as
+$$
+\text{relLog2LFQ} = \log_2(\text{LFQ, MT}) - \log_2(\text{LFQ, GFP})\,,
+$$
+and show pairwise comparisons.
+
+## GFP-corrected replicate library consistency II
+
+```{r echo=FALSE, fig.width = 8, fig.height = 6}
+df <- cbind.data.frame(
+  log2(data.merged[, 3]) - log2(data.merged[, 2]),
+  log2(data.merged[, 5]) - log2(data.merged[, 4]),
+  log2(data.merged[, 7]) - log2(data.merged[, 6]),
+  log2(data.merged[, 9]) - log2(data.merged[, 8]));
+colnames(df) <- names(data.list);
+df$id <- data.merged[, 1];
+# Switch off warnings to get rid of annoying warning messages due to NA's
+options(warn = -1);
+# Pairwise plots
+ggpairwise(
+  df,
+  xlab = "relLog2LFQ(Sample1)",
+  ylab = "relLog2LFQ(Sample1)",
+  title = "Correlation of pairwise sample relative (GFP-subtracted) LFQ values");
+options(warn = 0);
+```
+
+
+## Discussion & results
+Pairwise comparisons of protein abundances in the myc-tagged and GFP libraries show large congruence within myc-tagged replicates and within GFP libraries. However, the large correlation coefficients between protein abundances from myc-tagged with GFP control libraries suggest that specific binding using the myc antibodies is low.
+
+The principle component analysis supports this conclusion, where the separation in PC1 is driven by the different replicate experiments rather than the condition.
+
+Surprisingly, myc-tagged and GFP control libraries resemble replicate libraries, in as much as the by-design replicates behave as replicate libraries.
+

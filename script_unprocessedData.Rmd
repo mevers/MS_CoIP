@@ -130,6 +130,42 @@ ggpairwise(
 options(warn = 0);
 ```
 
+# Principle component analysis
+
+We perform a principle component (PC) analysis, and show the first and second PCs in the following figure.
+```{r echo=FALSE, fig.width = 8, fig.height = 6}
+pca <- prcomp(t(log2(data.merged[complete.cases(data.merged), -1])), scale = TRUE);
+df <- cbind.data.frame(
+  x = pca$x[, 1],
+  y = pca$x[, 2],
+  cond = gsub("_Exp.*", "", rownames(pca$x)),
+  id = rownames(pca$x));
+gg <- ggplot(df, aes(x = x, y = y, colour = cond));
+gg <- gg + geom_point(size = 2);
+gg <- gg + geom_text_repel(
+  aes(x = x, y = y, label = id),
+  box.padding = unit(1, 'lines'),
+  point.padding = unit(1, 'lines'),
+  min.segment.length = unit(0, "lines"));
+gg <- gg + theme_bw();
+gg <- gg + scale_colour_brewer(palette = "Set1", guide = FALSE);
+gg <- gg + theme(
+  strip.background = element_blank(),
+  panel.border = element_rect(colour = "black"),
+  legend.position = "bottom",
+  legend.key = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank()
+);
+gg <- gg + labs(
+  x = "PC 1",
+  y = "PC 2"
+);
+gg;
+```
+
+It is clear from the figure that the main separation in principle components of the libraries is driven by the different replicate experiments **irrespective** of the condition (overexpressed myc-tagged HEATR3 vs. GFP control). In other words, **the differences between e.g. the myc-tagged Exp3 and myc-tagged Exp4 libraries are larger than the differences between the myc-tagged Exp3 and GFP control Exp3 libraries**. 
+
 
 # GFP-corrected replicate library consistency
 We calculate relative protein abundances as
@@ -156,5 +192,11 @@ ggpairwise(
 options(warn = 0);
 ```
 
+
+
 # Discussion
-Pairwise comparisons of protein abundances in the myc-tagged and GFP libraries show large congruence within myc-tagged replicates and within GFP libraries. However, the large correlation coefficients when comparing protein abundances from myc-tagged with GFP libraries suggest that specific binding using the myc antibodies is low. 
+Pairwise comparisons of protein abundances in the myc-tagged and GFP libraries show large congruence within myc-tagged replicates and within GFP libraries. However, the large correlation coefficients between protein abundances from myc-tagged with GFP control libraries suggest that specific binding using the myc antibodies is low.
+
+The principle component analysis supports this conclusion, where the separation in PC1 is driven by the different replicate experiments rather than the condition.
+
+Surprisingly, myc-tagged and GFP control libraries could be considered replicate libraries, as much as the proper by-design replicates are considered replicate libraries.

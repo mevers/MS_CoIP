@@ -18,8 +18,8 @@ ggpairwise <- function(df, xlab = "", ylab = "", title = "") {
       aes(x = x, y = y, label = id), 
       colour = "red", 
       size = 3,
-      box.padding = unit(0.5, 'lines'),
-      point.padding = unit(1.5, 'lines'),
+      box.padding = unit(1, 'lines'),
+      point.padding = unit(1, 'lines'),
       min.segment.length = unit(0, "lines"));
     p <- p + geom_abline(slope = 1, intercept = 0, colour = "red", linetype = 3);
     p <- p + geom_smooth(method = method, fullrange = TRUE, ...);

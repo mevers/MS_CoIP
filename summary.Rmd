@@ -4,6 +4,7 @@ author: "Maurits Evers"
 date: "30/05/2017"
 output: 
   html_document:
+    code_folding: hide
     toc: true
     toc_depth: 2
     toc_float: true
@@ -89,7 +90,7 @@ data.merged[data.merged == 0] <- NA;
 We plot pairwise sample log2-transformed LFQ values, and show corresponding Pearson's product-moment correlation coefficients. Congruence between replicate libraries is reflected by large positive correlation coefficients. Dashed red lines indicate the identity map, and blue lines with blue shaded areas give the linear model fit including 95% confidence intervals. We highlight HEATR3 abundances in red.
 
 ## GFP libraries
-```{r echo=FALSE, fig.width = 8, fig.height = 6}
+```{r, fig.width = 8, fig.height = 6}
 df <- log2(data.merged[, grep("GFP", colnames(data.merged))]);
 df$id <- data.merged[, 1];
 # Switch off warnings to get rid of annoying warning messages due to NA's
@@ -103,7 +104,7 @@ options(warn = 0);
 ```
 
 ## MT libraries
-```{r echo=FALSE, fig.width = 8, fig.height = 6}
+```{r, fig.width = 8, fig.height = 6}
 df <- log2(data.merged[, grep("MT", colnames(data.merged))]);
 df$id <- data.merged[, 1];
 # Switch off warnings to get rid of annoying warning messages due to NA's
@@ -117,7 +118,7 @@ options(warn = 0);
 ```
 
 ## All libraries
-```{r echo=FALSE, fig.width = 12, fig.height = 12}
+```{r, fig.width = 12, fig.height = 12}
 df <- log2(data.merged[, -1]);
 df$id <- data.merged[, 1];
 # Switch off warnings to get rid of annoying warning messages due to NA's
@@ -133,13 +134,16 @@ options(warn = 0);
 # Principle component analysis
 
 We perform a principle component (PC) analysis, and show the first and second PCs in the following figure.
-```{r echo=FALSE, fig.width = 8, fig.height = 6}
+```{r}
 pca <- prcomp(t(log2(data.merged[complete.cases(data.merged), -1])), scale = TRUE);
 df <- cbind.data.frame(
   x = pca$x[, 1],
   y = pca$x[, 2],
   cond = gsub("_Exp.*", "", rownames(pca$x)),
   id = rownames(pca$x));
+```
+
+```{r, fig.width = 8, fig.height = 6}
 gg <- ggplot(df, aes(x = x, y = y, colour = cond));
 gg <- gg + geom_point(size = 2);
 gg <- gg + geom_text_repel(
@@ -173,7 +177,7 @@ $$
 \text{relLog2LFQ} = \log_2(\text{LFQ, MT}) - \log_2(\text{LFQ, GFP})\,,
 $$
 and show pairwise comparisons.
-```{r echo=FALSE, fig.width = 8, fig.height = 6}
+```{r, fig.width = 8, fig.height = 6}
 df <- cbind.data.frame(
   log2(data.merged[, 3]) - log2(data.merged[, 2]),
   log2(data.merged[, 5]) - log2(data.merged[, 4]),
